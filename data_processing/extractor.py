@@ -1,6 +1,22 @@
 import re
 
 
+def remove_footers(input_string):
+    compiled_pattern = re.compile(r'.*–(\d+)–.*\n')
+
+    removed_lines_count = 0
+
+    def remove_lines(match):
+        nonlocal removed_lines_count
+        removed_lines_count += 1
+        return ''
+
+    # Remove lines matching the pattern and count them
+    result_string = re.sub(compiled_pattern, remove_lines, input_string)
+
+    return result_string, removed_lines_count
+
+
 def extract_paragraphs(text):
     paragraph_pattern = r'§ \d+\. '
     matches = [(match.start(), match.end()) for match in re.finditer(paragraph_pattern, text)]
@@ -16,6 +32,8 @@ def extract_paragraphs(text):
 
 
 def process_text(text):
+    text, lines_removed_nb = remove_footers(text)
+    print(f"Lines removed: {lines_removed_nb}")
     chapter_pattern = re.compile(r'Rozdział\s+(\d+)')
     # Find all chapters
     chapters = [m for m in chapter_pattern.finditer(text)]

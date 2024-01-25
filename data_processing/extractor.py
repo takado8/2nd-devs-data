@@ -1,3 +1,5 @@
+import json
+import os
 import re
 
 
@@ -107,10 +109,20 @@ def process_text(file_path):
                 "date": date
             }
             records.append(record)
-
     return records
 
 
+def process_diaries(directory, output_path):
+    records = []
+    for filename in os.listdir(directory):
+        file_records = process_text(f'{directory}/{filename}')
+        records.extend(file_records)
+
+    with open(output_path, 'w+') as f:
+        json.dump(records, f)
+
+
 if __name__ == '__main__':
-    file_path = "../data/txt/dziennik z dnia 20.12.2021.txt"  # Replace with the actual path to your text file
-    process_text(file_path)
+    # file_path = "../data/txt/diaries/dziennik z dnia 20.12.2021.txt"
+    data_path = '../data/txt/diaries'
+    process_diaries(data_path, output_path='../data/diaries_processed.json')

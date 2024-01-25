@@ -32,6 +32,16 @@ def find_dates(text):
     return dates_dict
 
 
+def find_date_in_title(input_string):
+    date_pattern = re.compile(r'\b\d{1,2}\.\d{1,2}.\d{4}\b')
+    match = date_pattern.search(input_string)
+    if match:
+        extracted_date = match.group()
+        return extracted_date
+    else:
+        return '01.01.1970'
+
+
 def remove_footers(input_string):
     compiled_pattern = re.compile(r'.*–(\d+)–.*\n')
 
@@ -65,9 +75,7 @@ def extract_paragraphs(text):
 def process_text(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         text = file.read()
-    dates_dict = find_dates(text)
-    print(dates_dict)
-    return
+    date = find_date_in_title(file_path)
     text, lines_removed_nb = remove_footers(text)
     print(f"Lines removed: {lines_removed_nb}")
     chapter_pattern = re.compile(r'Rozdział\s+(\d+)')
@@ -84,7 +92,7 @@ def process_text(file_path):
 
         # Title is first line of each chapter
         title = chapter_text.strip().splitlines()[0]
-        print(f'Chapter {chapter_nb} title: {title}')
+        print(f'Date: {date} Chapter: {chapter_nb} title: {title}')
         # print(f'TXT: {chapter_text}')
         paragraphs = extract_paragraphs(chapter_text)
 
@@ -95,7 +103,8 @@ def process_text(file_path):
                 "txt": paragraph,
                 "chapter": chapter_nb,
                 "paragraph": paragraph_nb,
-                "title": title
+                "title": title,
+                "date": date
             }
             records.append(record)
 
@@ -103,5 +112,5 @@ def process_text(file_path):
 
 
 if __name__ == '__main__':
-    file_path = "../data/txt/dzienniki.txt"  # Replace with the actual path to your text file
+    file_path = "../data/txt/dziennik z dnia 20.12.2021.txt"  # Replace with the actual path to your text file
     process_text(file_path)

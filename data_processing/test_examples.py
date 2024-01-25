@@ -88,5 +88,30 @@ def find_date(text):
             print(f"Chapter {chapter_match.group(1)} - No date found.")
 
 
+def remove_white_lines(text):
+    import re
+    # Your long multiline string
+    input_string = """
+    here is together
+    This is some text.
+
+
+    With multiple lines.
+
+
+    And some extra white spaces.
+
+
+
+
+    At the end.
+    """
+
+    # Keep one line of whitespace between non-empty lines
+    output_string = re.sub('\n{2,}', '\n\n', input_string)
+
+    print(output_string)
+
+
 if __name__ == '__main__':
-    find_date('')
+    remove_white_lines('')

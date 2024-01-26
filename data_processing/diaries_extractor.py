@@ -10,9 +10,9 @@ def find_dates(text):
     matches = list(re.finditer(date_pattern, text))
     chapter_matches = list(re.finditer(chapter_pattern, text))
     dates_dict = {}
-    i=0
+    i = 0
     for chapter_match in chapter_matches:
-        i+=1
+        i += 1
         # Find the closest date before the chapter occurrence
         closest_date = None
         for date_match in reversed(matches):
@@ -103,10 +103,12 @@ def process_text(file_path):
             print(f'Paragraph {paragraph_nb}: {paragraph}')
             record = {
                 "txt": paragraph,
-                "chapter": chapter_nb,
-                "paragraph": paragraph_nb,
-                "title": title,
-                "date": date
+                "metadata": {
+                    "chapter": chapter_nb,
+                    "paragraph": paragraph_nb,
+                    "title": title,
+                    "date": date,
+                    "type": "diaries"}
             }
             records.append(record)
     return records

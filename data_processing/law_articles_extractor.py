@@ -41,7 +41,7 @@ def law_extractor(input_string):
         return input_string[idx:stop_idx].strip()
 
     chapter_pattern = re.compile(r'Rozdział\s+(\d+)')
-    article_pattern = re.compile(r"(Art\. \d+\. .*?)(?=Art\. \d+\. |$)", re.DOTALL)
+    article_pattern = re.compile(r"(Art\.\s+\d+\. .*?)(?=Art\.\s+\d+\. |$)", re.DOTALL)
 
     matches = [match for match in re.finditer(article_pattern, input_string)]
     chapter_titles = []
@@ -1144,4 +1144,4 @@ ustawą.
 
 if __name__ == '__main__':
     process_and_save_file('../data/txt/pzp.txt',
-        '../data/pzp_processed_with_metadata.json')
+        '../data/pzp_processed_with_metadata_fixed.json')

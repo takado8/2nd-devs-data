@@ -1,6 +1,23 @@
 import json
 import re
 
+MAX_TOKENS = 1500
+
+
+def split_longer_articles(law_article):
+    # Define the pattern for finding points
+    pattern = re.compile(r'\d+\)\s')
+    # Split the law article using the pattern
+    points = re.split(pattern, law_article)
+    points = [p.strip() for p in points]
+    title = points.pop(0)
+    return title, points
+
+
+def count_words_as_tokens(text):
+    words = text.split()
+    return len(words) * 2
+
 
 def remove_footer_lines_pzp_law(text):
     pattern = r'®\s+ApexNet\. Wiedza, która chroni\n'
@@ -20,17 +37,36 @@ def law_extractor(input_string):
     articles = []
     for i, match in enumerate(matches, start=1):
         txt = remove_footer_lines_pzp_law(match.strip())
-        entry = {
-            'txt': txt,
-            "metadata": {
-                "chapter": "1",
-                "paragraph": i,
-                "title": "",
-                "date": "11.09.2019",
-                "type": "main_law"
+        tokens = count_words_as_tokens(txt)
+        if tokens > MAX_TOKENS:
+            title, parts = split_longer_articles(txt)
+            print(f'splitting art {i} in {len(parts)} parts')
+
+            for part in parts:
+                i+=1
+                entry = {
+                    'txt': f'{title} {part}',
+                    "metadata": {
+                        "chapter": "1",
+                        "paragraph": i,
+                        "title": "",
+                        "date": "11.09.2019",
+                        "type": "main_law"
+                    }
+                }
+                articles.append(entry)
+        else:
+            entry = {
+                'txt': txt,
+                "metadata": {
+                    "chapter": "1",
+                    "paragraph": i,
+                    "title": "",
+                    "date": "11.09.2019",
+                    "type": "main_law"
+                }
             }
-        }
-        articles.append(entry)
+            articles.append(entry)
     return articles
 
 

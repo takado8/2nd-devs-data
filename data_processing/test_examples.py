@@ -193,8 +193,6 @@ def remove_footer_lines_pzp_law(text):
 
 
 def split_longer_articles(articles):
-    import re
-
     # Your multiline law article string
     law_article = """Art. 11. 1. Przepisów ustawy nie stosuje się do zamówień lub konkursów, których
 przedmiotem:
@@ -425,13 +423,15 @@ ze społeczną i zawodową integracją osób, o których mowa w art. 94 ust. 1 p
 
     # Split the law article using the pattern
     points = re.split(pattern, law_article)
-    # i = 0
+    points = [p.strip() for p in points]
     title = points.pop(0)
-    # for point in points:
-    #     i += 1
-    #     print(f'part {i}: {point.strip()}')
     return title, points
 
 
 if __name__ == '__main__':
-    split_longer_articles('')
+    t, ps = split_longer_articles('')
+    print(f'title: {t}')
+    for p in ps:
+        print('-----------------------------')
+        print(p)
+        print('-----------------------------')

@@ -1,5 +1,7 @@
 import re
 
+import tiktoken
+
 
 def extract_paragraphs():
     pattern = r'§ \d+\. '
@@ -428,10 +430,13 @@ ze społeczną i zawodową integracją osób, o których mowa w art. 94 ust. 1 p
     return title, points
 
 
+def count_tokens(string, encoding_name='cl100k_base') -> int:
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
+
+
 if __name__ == '__main__':
-    t, ps = split_longer_articles('')
-    print(f'title: {t}')
-    for p in ps:
-        print('-----------------------------')
-        print(p)
-        print('-----------------------------')
+    txt = "Hi there, hello, here is the new tokenizer. Sup, hey, hello."
+    nb_tokens = count_tokens(txt)
+    print(f'Tokens number: {nb_tokens}')

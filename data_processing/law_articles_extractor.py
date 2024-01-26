@@ -1,5 +1,6 @@
 import json
 import re
+import tiktoken
 
 MAX_TOKENS = 1500
 
@@ -14,9 +15,10 @@ def split_longer_articles(law_article):
     return title, points
 
 
-def count_words_as_tokens(text):
-    words = text.split()
-    return len(words) * 2
+def count_tokens(string, encoding_name='cl100k_base') -> int:
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
 
 
 def remove_footer_lines_pzp_law(text):
@@ -37,13 +39,12 @@ def law_extractor(input_string):
     articles = []
     for i, match in enumerate(matches, start=1):
         txt = remove_footer_lines_pzp_law(match.strip())
-        tokens = count_words_as_tokens(txt)
+        tokens = count_tokens(txt)
         if tokens > MAX_TOKENS:
             title, parts = split_longer_articles(txt)
             print(f'splitting art {i} in {len(parts)} parts')
 
             for part in parts:
-                i+=1
                 entry = {
                     'txt': f'{title} {part}',
                     "metadata": {
@@ -1109,4 +1110,5 @@ ustawą.
 
 
 if __name__ == '__main__':
-    process_and_save_file('../data/txt/pzp.txt', '../data/pzp_processed.json')
+    process_and_save_file('../data/txt/pzp.txt',
+        '../data/pzp_processed_new.json')

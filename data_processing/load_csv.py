@@ -18,7 +18,8 @@ def load_csv():
         for row in csv_reader:
             data_dict_list.append(dict(zip(KEYS, row)))
     print(f'Data len: {len(data_dict_list)}')
-    print(data_dict_list[501])
+    # print(data_dict_list[501])
+    return data_dict_list
     # i=0
     # longer_entries = []
     # for d in data_dict_list:

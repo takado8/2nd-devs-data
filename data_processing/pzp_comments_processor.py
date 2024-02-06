@@ -14,7 +14,9 @@ def extract_articles(filename):
     current_article = []
     articles_started = False
     header_started = False
-    headers_lines = []
+    all_headers_lines = []
+    header_lines = []
+    empty_lines = []
     for line in lines:
         match = re.search(article_regex, line)
         if match:
@@ -28,17 +30,34 @@ def extract_articles(filename):
             match = re.search(page_header_regex, line)
             if match:
                 if header_started:
+                    # end of header
                     header_started = False
-                    headers_lines.append(line)
+                    header_lines.append(line)
+                    if len(header_lines) <= 3:
+                        all_headers_lines.extend(header_lines)
+                    elif len(header_lines) > 3:  # not a header
+                        # remove lines with <```>
+                        header_lines.pop(0)
+                        header_lines.pop(-1)
+                        current_article.extend(header_lines)
+                    header_lines.clear()
                     continue
                 else:
                     header_started = True
+                    # remove previous 2 empty lines
+                    for _ in range(2):
+                        if current_article[-1].strip() == '':
+                            empty1 = current_article.pop(-1)
+                            empty_lines.append(empty1)
+
             if not header_started:
                 current_article.append(line)
             else:
-                headers_lines.append(line)
+                header_lines.append(line)
 
-    return headers_lines
+    # make sure nothing relevant was removed with empty lines
+    assert ''.join(empty_lines).strip() == ''
+    return articles
 
 
 if __name__ == '__main__':
@@ -46,7 +65,9 @@ if __name__ == '__main__':
     # Example usage:
     filename = '../data/md/pzp_comments.csv'
     extracted_articles = extract_articles(filename)
-
-    for i, text in enumerate(extracted_articles[:150], start=1):
+    print(f'Extracted: {len(extracted_articles)}')
+    # with open("aaaaaaaaaa.json", 'w+', encoding='utf-8')as f:
+    #     json.dump(extracted_articles, f)
+    for i, text in enumerate(extracted_articles[:15], start=1):
         print(f"Text {i}:", text)
         print("----------")

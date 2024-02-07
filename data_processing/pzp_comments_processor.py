@@ -1,6 +1,40 @@
 import json
 import re
 
+numbers_of = [0, 0]
+
+
+def extract_comment_from_article(article):
+    comment = []
+    result_article = []
+    comment_start = False
+    first_line = True
+    for line in article:
+        if first_line:
+            result_article.append(line)
+            first_line = False
+            continue
+        stripped = line.strip()
+        if not comment_start and stripped[-1] == '*' and stripped[-2] == '*':
+            comment_start = True
+            result_article.append(line)
+            continue
+
+        if comment_start:
+            comment.append(line)
+        else:
+            result_article.append(line)
+    # result_article_str = ''.join(result_article)
+    # comment_str = ''.join(comment)
+    # print(f'\n\nArticle: {result_article_str}\nComment: {comment_str}')
+    # assert len(result_article) > 0
+    # assert len(comment) > 0
+    if len(comment) <= 0:
+        numbers_of[0] += 1
+    if len(article) <= 0:
+        numbers_of[1] += 1
+    return result_article, comment
+
 
 def extract_article_number(string):
     numbers = re.findall(r'\d+', string)
@@ -59,6 +93,7 @@ def extract_articles(filename):
             if current_article:
                 current_article = remove_header_type_2(current_article)
                 current_article = remove_empty_lines(current_article)
+                extract_comment_from_article(current_article)
                 articles.append(current_article)
             current_article = [line]
         elif articles_started:
@@ -85,6 +120,8 @@ def extract_articles(filename):
             else:
                 header_lines.append(line)
     articles.append(current_article)
+    extract_comment_from_article(current_article)
+
     # make sure nothing relevant was removed with empty lines
     assert ''.join(empty_lines).strip() == ''
     return articles
@@ -110,17 +147,18 @@ def process_comments(filename, output_filename):
         }
         datapoints.append(entry)
         # print(f'{i}: {article_string}')
-    with open(output_filename, 'w+', encoding='utf-8') as f:
-        json.dump(datapoints, f)
-    print(f'{len(datapoints)} entries saved to file: {output_filename}')
+    # with open(output_filename, 'w+', encoding='utf-8') as f:
+    #     # json.dump(datapoints, f)
+    #     f.write(''.join([''.join(article) for article in articles]))
+    # print(f'{len(datapoints)} entries saved to file: {output_filename}')
 
 
 if __name__ == '__main__':
     filename = '../data/md/pzp_comments.md'
-    output_filename = '../data/json/pzp_comments.json'
+    output_filename = '../data/json/pzp_comments.txt'
 
     process_comments(filename, output_filename)
-
+    print(numbers_of)
     #
     # for i, text in enumerate(extracted_articles[:20], start=1):
     #     print(f"Text {i}:", text)

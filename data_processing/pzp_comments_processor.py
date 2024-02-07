@@ -38,10 +38,8 @@ def extract_articles(filename):
                 articles_started = True
             # new article starts
             if current_article:
-                current_article, removed_lines = remove_header_type_2(current_article)
-                for l in removed_lines:
-                    print(l)
-                articles.append(''.join(current_article))
+                current_article = remove_header_type_2(current_article)
+                articles.append(current_article)
             current_article = [line]
         elif articles_started:
             match = re.search(page_header_regex, line)
@@ -77,14 +75,19 @@ def extract_articles(filename):
     return articles
 
 
-if __name__ == '__main__':
+def process_comments(filename):
+    articles = extract_articles(filename)
+    for i, article in enumerate(articles, start=1):
+        article_nb_line = article.pop(0)
+        print(f'{i}: {article_nb_line.strip()}')
 
-    # Example usage:
+
+if __name__ == '__main__':
     filename = '../data/md/pzp_comments.md'
-    extracted_articles = extract_articles(filename)
-    print(f'Extracted: {len(extracted_articles)}')
-    # with open("aaaaaaaaaa.json", 'w+', encoding='utf-8')as f:
-    #     json.dump(extracted_articles, f)
+
+    process_comments(filename)
+
+    #
     # for i, text in enumerate(extracted_articles[:20], start=1):
     #     print(f"Text {i}:", text)
     #     print("----------")

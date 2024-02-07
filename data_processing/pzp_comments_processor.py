@@ -69,7 +69,7 @@ def extract_articles(filename):
                 current_article.append(line)
             else:
                 header_lines.append(line)
-
+    articles.append(current_article)
     # make sure nothing relevant was removed with empty lines
     assert ''.join(empty_lines).strip() == ''
     return articles
@@ -78,8 +78,10 @@ def extract_articles(filename):
 def process_comments(filename):
     articles = extract_articles(filename)
     for i, article in enumerate(articles, start=1):
-        article_nb_line = article.pop(0)
-        print(f'{i}: {article_nb_line.strip()}')
+        # article_nb_line = article.pop(0)
+        # print(f'{i}: {article_nb_line.strip()}')
+        article_string = ''.join(article)
+        print(f'{i}: {article_string}')
 
 
 if __name__ == '__main__':

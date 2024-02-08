@@ -1,7 +1,9 @@
 import json
 import re
 
-numbers_of = [0, 0]
+from data_processing.law_articles_extractor import count_tokens
+
+MAX_TOKENS = 1500
 
 
 def extract_comment_from_article_type_2(article):
@@ -180,6 +182,35 @@ def extract_articles(filename):
     return zip(articles, comments)
 
 
+def split_comment(comment):
+    all_sections = []
+    current_section = []
+    section_start_pattern = r"^\*\*\d+\.\s+"
+    section_start_regex = re.compile(section_start_pattern)
+    section_title_pattern = r'^\*\*(\d+)\.([\s*\w*\W*]*)\*\*'
+    section_title_regex = re.compile(section_title_pattern)
+
+    for line in comment:
+        stripped = line.strip()
+        match = re.search(section_start_regex, stripped)
+        if match:  # new section starts
+            if current_section:
+                all_sections.append(current_section)
+                current_section = []
+            # try to match whole title
+            match2 = re.search(section_title_regex, stripped)
+            if match2:
+                print(match2.groups())
+            else:
+                print(match.group(0))
+        current_section.append(line)
+    all_sections.append(current_section)
+
+    for section in all_sections:
+        print()
+        print(''.join(section))
+
+
 def process_comments(filename, output_filename):
     articles_and_comments = extract_articles(filename)
     datapoints = []
@@ -187,33 +218,38 @@ def process_comments(filename, output_filename):
         article_nb_line = article[0][0]
         article_nb = extract_article_number(article_nb_line.strip())
         # print(f'{i}: {article_nb}')
-        article_string = ''.join(article[0])
-        comment_string = ''.join(article[1])
-        entry = {
-            'art': article_string,
-            'txt': comment_string,
-            "metadata": {
-                "chapter": "0",
-                "paragraph": article_nb,
-                "title": "0",
-                "date": "20.05.2021",
-                "type": "kdnpzp"
+        # article_string = ''.join(article[0])
+        comment = article[1]
+        comment_string = ''.join(comment)
+        print('counting tokens...')
+        tokens = count_tokens(comment_string)
+        print(tokens)
+        if tokens <= MAX_TOKENS:
+            entry = {
+                'txt': comment_string,
+                "metadata": {
+                    "chapter": "0",
+                    "paragraph": article_nb,
+                    "title": "0",
+                    "date": "20.05.2021",
+                    "type": "kdnpzp"
+                }
             }
-        }
-        datapoints.append(entry)
-        # print(f'{i}: {article_string}')
-    with open(output_filename, 'w+', encoding='utf-8') as f:
-        json.dump(datapoints, f)
-        # f.write(''.join([''.join(article) for article in articles]))
-    print(f'{len(datapoints)} entries saved to file: {output_filename}')
+            datapoints.append(entry)
+        else:
+            print('too long')
+            split_comment(comment)
+    # with open(output_filename, 'w+', encoding='utf-8') as f:
+    #     json.dump(datapoints, f)
+        # f.write(''.join([''.join(article[1]) for article in articles_and_comments]))
+    # print(f'{len(datapoints)} entries saved to file: {output_filename}')
 
 
 if __name__ == '__main__':
     filename = '../data/md/pzp_comments.md'
-    output_filename = '../data/json/pzp_comments.json'
+    output_filename = '../data/json/pzp_comments.txt'
 
     process_comments(filename, output_filename)
-    print(numbers_of)
     #
     # for i, text in enumerate(extracted_articles[:20], start=1):
     #     print(f"Text {i}:", text)

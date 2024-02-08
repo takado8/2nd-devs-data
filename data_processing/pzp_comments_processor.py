@@ -73,8 +73,8 @@ def extract_comment_from_article(article):
         bad_split = True
     if bad_split:
         result_article, comment = extract_comment_from_article_type_2(article)
-        art_str = ''.join(result_article)
-        comm_str = ''.join(comment)
+        # art_str = ''.join(result_article)
+        # comm_str = ''.join(comment)
         # print(f'\n\nArticle: {art_str}\nComment: {comm_str}')
     assert len(result_article) > 0
     assert len(comment) > 0
@@ -114,10 +114,18 @@ def remove_header_type_2(lines):
     return result_lines
 
 
+def process_article(article):
+    article_with_comments = remove_header_type_2(article)
+    article_with_comments = remove_empty_lines(article_with_comments)
+    art, comm = extract_comment_from_article(article_with_comments)
+    return art, comm
+
+
 def extract_articles(filename):
     with open(filename, 'r', encoding='utf-8') as file:
         lines = file.readlines()
     articles = []
+    comments = []
     article_pattern = r"\*\*Art\.\s\d+\.\s*"
     article_regex = re.compile(article_pattern)
     page_header_pattern = r"```"
@@ -136,10 +144,9 @@ def extract_articles(filename):
                 articles_started = True
             # new article starts
             if current_article:
-                current_article = remove_header_type_2(current_article)
-                current_article = remove_empty_lines(current_article)
-                extract_comment_from_article(current_article)
-                articles.append(current_article)
+                article, comment = process_article(current_article)
+                articles.append(article)
+                comments.append(comment)
             current_article = [line]
         elif articles_started:
             match = re.search(page_header_regex, line)
@@ -164,24 +171,27 @@ def extract_articles(filename):
                 current_article.append(line)
             else:
                 header_lines.append(line)
-    articles.append(current_article)
-    extract_comment_from_article(current_article)
-
+    article, comment = process_article(current_article)
+    articles.append(article)
+    comments.append(comment)
+    assert len(articles) == len(comments)
     # make sure nothing relevant was removed with empty lines
     assert ''.join(empty_lines).strip() == ''
-    return articles
+    return zip(articles, comments)
 
 
 def process_comments(filename, output_filename):
-    articles = extract_articles(filename)
+    articles_and_comments = extract_articles(filename)
     datapoints = []
-    for i, article in enumerate(articles, start=1):
-        article_nb_line = article[0]
+    for i, article in enumerate(articles_and_comments, start=1):
+        article_nb_line = article[0][0]
         article_nb = extract_article_number(article_nb_line.strip())
         # print(f'{i}: {article_nb}')
-        article_string = ''.join(article)
+        article_string = ''.join(article[0])
+        comment_string = ''.join(article[1])
         entry = {
-            'txt': article_string,
+            'art': article_string,
+            'txt': comment_string,
             "metadata": {
                 "chapter": "0",
                 "paragraph": article_nb,
@@ -192,15 +202,15 @@ def process_comments(filename, output_filename):
         }
         datapoints.append(entry)
         # print(f'{i}: {article_string}')
-    # with open(output_filename, 'w+', encoding='utf-8') as f:
-    #     # json.dump(datapoints, f)
-    #     f.write(''.join([''.join(article) for article in articles]))
-    # print(f'{len(datapoints)} entries saved to file: {output_filename}')
+    with open(output_filename, 'w+', encoding='utf-8') as f:
+        json.dump(datapoints, f)
+        # f.write(''.join([''.join(article) for article in articles]))
+    print(f'{len(datapoints)} entries saved to file: {output_filename}')
 
 
 if __name__ == '__main__':
     filename = '../data/md/pzp_comments.md'
-    output_filename = '../data/json/pzp_comments.txt'
+    output_filename = '../data/json/pzp_comments.json'
 
     process_comments(filename, output_filename)
     print(numbers_of)

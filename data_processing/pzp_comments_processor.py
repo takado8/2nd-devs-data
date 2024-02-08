@@ -4,7 +4,40 @@ import re
 numbers_of = [0, 0]
 
 
+def extract_comment_from_article_type_2(article):
+    # assuming article bold font ends at first point of comment
+    comment = []
+    result_article = []
+    comment_start = False
+    first_line = True
+    article_end_pattern = r"[^\s]\*\*"
+    article_end_regex = re.compile(article_end_pattern)
+
+    for line in article:
+        if first_line:
+            result_article.append(line)
+            first_line = False
+            continue
+        stripped = line.strip()
+        match = re.search(article_end_regex, stripped)
+
+        if not comment_start and match:
+            comment_start = True
+        if comment_start:
+            comment.append(line)
+        else:
+            result_article.append(line)
+    # result_article_str = ''.join(result_article)
+    # comment_str = ''.join(comment)
+    # print(f'\n\nArticle: {result_article_str}\nComment: {comment_str}')
+    assert len(result_article) > 0
+    assert len(comment) > 0
+
+    return result_article, comment
+
+
 def extract_comment_from_article(article):
+    # assuming article ends with **
     comment = []
     result_article = []
     comment_start = False
@@ -29,10 +62,22 @@ def extract_comment_from_article(article):
     # print(f'\n\nArticle: {result_article_str}\nComment: {comment_str}')
     # assert len(result_article) > 0
     # assert len(comment) > 0
-    if len(comment) <= 0:
-        numbers_of[0] += 1
-    if len(article) <= 0:
-        numbers_of[1] += 1
+    bad_split = False
+    if len(comment) <= 0:  # bad split
+        bad_split = True
+        # numbers_of[0] += 1
+        # print(''.join(result_article))
+
+    if len(result_article) <= 0:
+        # numbers_of[1] += 1
+        bad_split = True
+    if bad_split:
+        result_article, comment = extract_comment_from_article_type_2(article)
+        art_str = ''.join(result_article)
+        comm_str = ''.join(comment)
+        # print(f'\n\nArticle: {art_str}\nComment: {comm_str}')
+    assert len(result_article) > 0
+    assert len(comment) > 0
     return result_article, comment
 
 

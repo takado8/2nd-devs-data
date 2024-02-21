@@ -2,7 +2,7 @@ import json
 import re
 import tiktoken
 
-MAX_TOKENS = 1500
+MAX_TOKENS = 8100
 
 
 def split_longer_articles(law_article):
@@ -110,11 +110,11 @@ def process_and_save_file(input_path, output_path):
 
     articles = law_extractor(text)
     print(f'{len(articles)} extracted.')
-    with open(output_path, 'w+') as f:
-        json.dump(articles, f)
+    with open(output_path, 'w+', encoding='utf-8') as f:
+        json.dump(articles, f, ensure_ascii=False)
     print(f'saved to file: {output_path}')
 
 
 if __name__ == '__main__':
     process_and_save_file('../data/txt/pzp.txt',
-        '../data/pzp_processed_with_metadata_fixed.json')
+        '../data/json/pzp_uncut_no_ascii.json')

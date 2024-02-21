@@ -169,10 +169,12 @@ def extract_comment_from_article(article):
     return result_article, comment
 
 
-def extract_article_number(string):
+def extract_article_number(string, expected):
     numbers = re.findall(r'\d+', string)
-    assert len(numbers) == 1
-    return numbers.pop()
+    number = numbers.pop(0)
+    assert int(number) == expected, f'numbers: {numbers}, number: {number}, expected: {expected}'
+    # assert len(numbers) == 1, numbers
+    return number
 
 
 def remove_empty_lines(article):
@@ -203,8 +205,8 @@ def remove_header_type_2(lines):
 
 
 def process_article(article):
-    article_with_comments = remove_header_type_2(article)
-    article_with_comments = remove_empty_lines(article_with_comments)
+    # article_with_comments = remove_header_type_2(article)
+    article_with_comments = remove_empty_lines(article)
     art, comm = extract_comment_from_article_v2(article_with_comments)
     return art, comm
 
@@ -214,7 +216,7 @@ def extract_articles(filename):
         lines = file.readlines()
     articles = []
     comments = []
-    article_pattern = r"\*\*Art\.\s\d+\.\s*"
+    article_pattern = r"^\s*\**Art\.\s\d+\s*"
     article_regex = re.compile(article_pattern)
     page_header_pattern = r"```"
     page_header_regex = re.compile(page_header_pattern)
@@ -237,23 +239,23 @@ def extract_articles(filename):
                 comments.append(comment)
             current_article = [line]
         elif articles_started:
-            match = re.search(page_header_regex, line)
-            if match:
-                if header_started:
-                    # end of header
-                    header_started = False
-                    header_lines.append(line)
-                    if len(header_lines) <= 3:
-                        all_headers_lines.extend(header_lines)
-                    elif len(header_lines) > 3:  # not a header
-                        # remove lines with <```>
-                        header_lines.pop(0)
-                        header_lines.pop(-1)
-                        current_article.extend(header_lines)
-                    header_lines.clear()
-                    continue
-                else:
-                    header_started = True
+            # match = re.search(page_header_regex, line)
+            # if match:
+            #     if header_started:
+            #         # end of header
+            #         header_started = False
+            #         header_lines.append(line)
+            #         if len(header_lines) <= 3:
+            #             all_headers_lines.extend(header_lines)
+            #         elif len(header_lines) > 3:  # not a header
+            #             # remove lines with <```>
+            #             header_lines.pop(0)
+            #             header_lines.pop(-1)
+            #             current_article.extend(header_lines)
+            #         header_lines.clear()
+            #         continue
+            #     else:
+            #         header_started = True
 
             if not header_started:
                 current_article.append(line)
@@ -302,13 +304,15 @@ def process_comments(filename, output_filename):
     datapoints = []
     too_long = 0
     for i, article in enumerate(articles_and_comments, start=1):
-        print(i + 1)
+        print(i)
         article_nb_line = article[0][0]
-        article_nb = extract_article_number(article_nb_line.strip())
+        article_nb = extract_article_number(article_nb_line.strip(), expected=i)
         # print(f'{i}: {article_nb}')
         # article_string = ''.join(article[0])
         comment = article[1]
         comment_string = ''.join(comment)
+        article_string = ''.join(article[0])
+        print(article_string)
         # print('counting tokens...')
         tokens = count_tokens(comment_string)
         # print(tokens)
@@ -319,7 +323,7 @@ def process_comments(filename, output_filename):
                     "chapter": "0",
                     "paragraph": article_nb,
                     "title": "0",
-                    "date": "20.05.2021",
+                    "date": "10.02.2023",
                     "type": "kdnpzp"
                 }
             }
@@ -338,8 +342,8 @@ def process_comments(filename, output_filename):
 
 
 if __name__ == '__main__':
-    filename = '../data/md/pzp_comments.md'
-    output_filename = '../data/json/pzp_comments_most.json'
+    filename = '../data/md/pzp_comments_v2.md'
+    output_filename = '../data/json/pzp_comments_v2_0.json'
 
     process_comments(filename, output_filename)
     print(f'empty: {empty}')

@@ -5,82 +5,18 @@ from data_processing.law_articles_extractor import count_tokens
 
 MAX_TOKENS = 8100
 empty = [0]
-
-with open('../data/json/pzp_uncut_no_ascii.json', encoding='utf-8') as f:
-    pzp_extracted_articles_list = json.load(f)
+empty_lines_nb = ['39', '40', '43', '48', '49', '51', '77', '105', '149', '159', '221', '244', '248', '249', '250', '268', '274', '289', '294', '295', '296', '297', '301', '303', '307', '309', '347', '364', '366', '367', '370', '375', '393', '404', '407', '410', '416', '421', '424', '426', '429', '443', '444', '448', '451', '453', '456', '458', '459', '460', '461', '463', '465', '515', '550', '592', '621']
 
 
-def extract_comment_from_article_type_2(article):
-    # assuming article bold font ends at first point of comment
-    comment = []
-    result_article = []
-    comment_start = False
-    first_line = True
-    article_end_pattern = r"[^\s]\*\*"
-    article_end_regex = re.compile(article_end_pattern)
-
-    for line in article:
-        if first_line:
-            result_article.append(line)
-            first_line = False
-            continue
-        stripped = line.strip()
-        match = re.search(article_end_regex, stripped)
-
-        if not comment_start and match:
-            comment_start = True
-        if comment_start:
-            comment.append(line)
-        else:
-            result_article.append(line)
-    # result_article_str = ''.join(result_article)
-    # comment_str = ''.join(comment)
-    # print(f'\n\nArticle: {result_article_str}\nComment: {comment_str}')
-    assert len(result_article) > 0
-    assert len(comment) > 0
-
-    return result_article, comment
-
-
-def compare_lines(line1, line2):
-    line1_words = line1.strip().split()
-    line2_words = line2.strip().split()
-    matches = 0
-    for word in line1_words:
-        if word in line2_words:
-            matches += 1
-
-    if matches >= len(line1_words) - 2:
-        return True
-    else:
-        return False
-
-
-def extract_comment_from_article_with_pzp(article):
-    article_nb = int(extract_article_number(article[0]))
-    article_from_pzp = pzp_extracted_articles_list[article_nb - 1]
-    pzp_lines = article_from_pzp['txt'].split('\n')
-    pzp_last_line = pzp_lines[-1]
-    # Using regular expression to replace whitespace characters with \s*
-    article_lines = []
-    comment_lines = []
-    article_end = False
-    for line in article:
-        match = compare_lines(pzp_last_line, line)
-        if match and not article_end:
-            article_end = True
-            article_lines.append(line)
-            continue
-        if article_end:
-            comment_lines.append(line)
-        else:
-            article_lines.append(line)
-    if not comment_lines:
-        empty[0] += 1
-    # assert article_lines
-    article_string = ''.join(article)
-    # assert comment_lines, f"Empty comment at {article_nb}\npzp_line: `{pzp_last_line}`\n{article_string}"
-    return article_lines, comment_lines
+def aaaaa():
+    a = '''**1. Zamawiający wyznaczony dla organów administracji rządowej lub jednostek orga-
+nizacyjnych podległych tym organom lub przez nie nadzorowanych.**
+ Przepis art. **39** Pzp'''
+    comment_first_line_pattern = r"^\**1\.\s+[\s*\w*\W*]*-$"
+    comment_first_line_regex = re.compile(comment_first_line_pattern)
+    for line in a.split('\n'):
+        matches = re.findall(comment_first_line_pattern, line.strip())
+        print(matches)
 
 
 def extract_comment_from_article_v2(article, first_line_pattern=None):
@@ -118,54 +54,6 @@ def extract_comment_from_article_v2(article, first_line_pattern=None):
                 comment_first_line_pattern_alt)
     # assert len(result_article) > 0
     # assert len(comment) > 0
-    return result_article, comment
-
-
-def extract_comment_from_article(article):
-    # assuming article ends with **
-    comment = []
-    result_article = []
-    comment_start = False
-    first_line = True
-    comment_first_line_pattern = r"^[\*\*]*1\.\s+[\s*\w*\W*]*"
-    for line in article:
-        if first_line:
-            result_article.append(line)
-            first_line = False
-            continue
-        stripped = line.strip()
-
-        if not comment_start and stripped[-1] == '*' and stripped[-2] == '*':
-            comment_start = True
-            result_article.append(line)
-            continue
-
-        if comment_start:
-            comment.append(line)
-        else:
-            result_article.append(line)
-    # result_article_str = ''.join(result_article)
-    # comment_str = ''.join(comment)
-    # print(f'\n\nArticle: {result_article_str}\nComment: {comment_str}')
-    # assert len(result_article) > 0
-    # assert len(comment) > 0
-    bad_split = False
-    if len(comment) <= 0:  # bad split
-        bad_split = True
-        # numbers_of[0] += 1
-        # print(''.join(result_article))
-
-    if len(result_article) <= 0:
-        # numbers_of[1] += 1
-        bad_split = True
-    if bad_split:
-        # print(f"bad art. {article[0]}")
-        result_article, comment = extract_comment_from_article_type_2(article)
-        # art_str = ''.join(result_article)
-        # comm_str = ''.join(comment)
-        # print(f'\n\nArticle: {art_str}\nComment: {comm_str}')
-    assert len(result_article) > 0
-    assert len(comment) > 0
     return result_article, comment
 
 
@@ -302,17 +190,26 @@ def split_comment(comment):
 def process_comments(filename, output_filename):
     articles_and_comments = extract_articles(filename)
     datapoints = []
+    lacking = []
     too_long = 0
     for i, article in enumerate(articles_and_comments, start=1):
-        print(i)
+        # print(i)
         article_nb_line = article[0][0]
         article_nb = extract_article_number(article_nb_line.strip(), expected=i)
         # print(f'{i}: {article_nb}')
         # article_string = ''.join(article[0])
         comment = article[1]
         comment_string = ''.join(comment)
-        article_string = ''.join(article[0])
-        print(article_string)
+        if comment_string == '' and article_nb in empty_lines_nb:
+            # lacking.append(article_nb)
+            art, comment = extract_comment_from_article_v2(article[0],
+                r"^\**1\.\s+[\s*\w*\W*]*-$")
+            # print(article_nb)
+            # article_string = ''.join(article[0])
+            # print(article_string)
+        comment_string = ''.join(comment)
+        if comment_string == '':
+            lacking.append(article_nb)
         # print('counting tokens...')
         tokens = count_tokens(comment_string)
         # print(tokens)
@@ -333,7 +230,8 @@ def process_comments(filename, output_filename):
 
             too_long += 1
             # split_comment(comment)
-
+    print(lacking)
+    print(len(lacking))
     # print(f'too long: {too_long}')
     with open(output_filename, 'w+', encoding='utf-8') as f:
         json.dump(datapoints, f, ensure_ascii=False)
@@ -343,10 +241,10 @@ def process_comments(filename, output_filename):
 
 if __name__ == '__main__':
     filename = '../data/md/pzp_comments_v2.md'
-    output_filename = '../data/json/pzp_comments_v2_0.json'
+    output_filename = '../data/json/pzp_comments_v2_2.json'
 
     process_comments(filename, output_filename)
-    print(f'empty: {empty}')
+    # print(f'empty: {empty}')
     #
     # for i, text in enumerate(extracted_articles[:20], start=1):
     #     print(f"Text {i}:", text)

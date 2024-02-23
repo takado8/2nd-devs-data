@@ -5,7 +5,10 @@ from data_processing.law_articles_extractor import count_tokens
 
 MAX_TOKENS = 8100
 empty = [0]
-empty_lines_nb = ['39', '40', '43', '48', '49', '51', '77', '105', '149', '159', '221', '244', '248', '249', '250', '268', '274', '289', '294', '295', '296', '297', '301', '303', '307', '309', '347', '364', '366', '367', '370', '375', '393', '404', '407', '410', '416', '421', '424', '426', '429', '443', '444', '448', '451', '453', '456', '458', '459', '460', '461', '463', '465', '515', '550', '592', '621']
+empty_lines_nb = ['39', '40', '43', '48', '49', '51', '77', '105', '149', '159', '221', '244', '248', '249', '250',
+                  '268', '274', '289', '294', '295', '296', '297', '301', '303', '307', '309', '347', '364', '366',
+                  '367', '370', '375', '393', '404', '407', '410', '416', '421', '424', '426', '429', '443', '444',
+                  '448', '451', '453', '456', '458', '459', '460', '461', '463', '465', '515', '550', '592', '621']
 
 
 def aaaaa():
@@ -161,10 +164,8 @@ def extract_articles(filename):
 def split_comment(comment):
     all_sections = []
     current_section = []
-    section_start_pattern = r"^\*\*\d+\.\s+"
+    section_start_pattern = r"^\*\*\d+\.[\d+\.]*\s+"
     section_start_regex = re.compile(section_start_pattern)
-    section_title_pattern = r'^\*\*(\d+)\.([\s*\w*\W*]*)\*\*'
-    section_title_regex = re.compile(section_title_pattern)
 
     for line in comment:
         stripped = line.strip()
@@ -173,75 +174,69 @@ def split_comment(comment):
             if current_section:
                 all_sections.append(current_section)
                 current_section = []
-            # try to match whole title
-            match2 = re.search(section_title_regex, stripped)
-            if match2:
-                print(match2.groups())
-            else:
-                print(match.group(0))
+
         current_section.append(line)
     all_sections.append(current_section)
 
     for section in all_sections:
-        print()
-        print(''.join(section))
+        section_string = '\n'.join(section)
+        tokens = count_tokens(section_string)
+        assert tokens <= MAX_TOKENS, f'Too many tokens: {tokens}'
+    return all_sections
+
+
+def create_entry(comment_string, article_nb):
+    return {
+        'txt': comment_string,
+        "metadata": {
+            "chapter": "0",
+            "paragraph": article_nb,
+            "title": "0",
+            "date": "10.02.2023",
+            "type": "kdnpzp"
+        }
+    }
 
 
 def process_comments(filename, output_filename):
     articles_and_comments = extract_articles(filename)
     datapoints = []
     lacking = []
-    too_long = 0
     for i, article in enumerate(articles_and_comments, start=1):
         # print(i)
         article_nb_line = article[0][0]
         article_nb = extract_article_number(article_nb_line.strip(), expected=i)
-        # print(f'{i}: {article_nb}')
-        # article_string = ''.join(article[0])
         comment = article[1]
-        comment_string = ''.join(comment)
+        comment_string = '\n'.join(comment)
         if comment_string == '' and article_nb in empty_lines_nb:
-            # lacking.append(article_nb)
             art, comment = extract_comment_from_article_v2(article[0],
                 r"^\**1\.\s+[\s*\w*\W*]*-$")
-            # print(article_nb)
-            # article_string = ''.join(article[0])
-            # print(article_string)
-        comment_string = ''.join(comment)
+        comment_string = '\n'.join(comment)
         if comment_string == '':
             lacking.append(article_nb)
         # print('counting tokens...')
         tokens = count_tokens(comment_string)
         # print(tokens)
         if tokens <= MAX_TOKENS:
-            entry = {
-                'txt': comment_string,
-                "metadata": {
-                    "chapter": "0",
-                    "paragraph": article_nb,
-                    "title": "0",
-                    "date": "10.02.2023",
-                    "type": "kdnpzp"
-                }
-            }
+            entry = create_entry(comment_string, article_nb)
             datapoints.append(entry)
             # print(f'too long: {article_nb}')
         else:
-
-            too_long += 1
-            # split_comment(comment)
+            all_sections = split_comment(comment)
+            for section in all_sections:
+                datapoints.append(create_entry('\n'.join(section), article_nb))
     print(lacking)
     print(len(lacking))
     # print(f'too long: {too_long}')
     with open(output_filename, 'w+', encoding='utf-8') as f:
         json.dump(datapoints, f, ensure_ascii=False)
         # f.write(datapoints_string)
-    # print(f'{len(datapoints)} entries saved to file: {output_filename}')
+    print(f'{len(datapoints)} entries saved to file: {output_filename}')
 
 
 if __name__ == '__main__':
     filename = '../data/md/pzp_comments_v2.md'
-    output_filename = '../data/json/pzp_comments_v2_2.json'
+    output_filename = '../data/json/pzp_comments_v2_2_3.json'
 
     process_comments(filename, output_filename)
     # print(f'empty: {empty}')

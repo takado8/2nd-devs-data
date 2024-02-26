@@ -191,7 +191,7 @@ def create_entry(comment_string, article_nb):
         "metadata": {
             "chapter": "0",
             "paragraph": article_nb,
-            "title": "0",
+            "title": f"Komentarz do Art. {article_nb} PZP",
             "date": "10.02.2023",
             "type": "kdnpzp"
         }
@@ -213,11 +213,10 @@ def process_comments(filename, output_filename):
     saved_batches = 1
     for i, article in enumerate(articles_and_comments, start=1):
         # print(i)
-        if len(datapoints) % 10 == 0 and datapoints:
+        if len(datapoints) % 400 == 0 and datapoints:
             save_datapoints(f"{output_filename}_{saved_batches}.json", datapoints)
             saved_batches += 1
             datapoints.clear()
-            return
         article_nb_line = article[0][0]
         article_nb = extract_article_number(article_nb_line.strip(), expected=i)
         comment = article[1]
@@ -228,6 +227,7 @@ def process_comments(filename, output_filename):
         comment_string = '\n'.join(comment)
         if comment_string == '':
             lacking.append(article_nb)
+            comment_string = 'Uchylony'
         # print('counting tokens...')
         tokens = count_tokens(comment_string)
         # print(tokens)
@@ -248,7 +248,7 @@ def process_comments(filename, output_filename):
 
 if __name__ == '__main__':
     filename = '../data/md/pzp_comments_v2.md'
-    output_filename = '../data/json/pzp_comments_v2_test_10'
+    output_filename = '../data/json/pzp_comments_v2_complete'
 
     process_comments(filename, output_filename)
     # print(f'empty: {empty}')

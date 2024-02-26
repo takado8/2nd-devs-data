@@ -198,12 +198,26 @@ def create_entry(comment_string, article_nb):
     }
 
 
+def save_datapoints(output_filename, datapoints):
+    with open(output_filename, 'w+', encoding='utf-8') as f:
+        json.dump(datapoints, f, ensure_ascii=False)
+        # f.write(datapoints_string)
+    print(f'{len(datapoints)} entries saved to file: {output_filename}')
+
+
 def process_comments(filename, output_filename):
     articles_and_comments = extract_articles(filename)
+
     datapoints = []
     lacking = []
+    saved_batches = 1
     for i, article in enumerate(articles_and_comments, start=1):
         # print(i)
+        if len(datapoints) % 10 == 0 and datapoints:
+            save_datapoints(f"{output_filename}_{saved_batches}.json", datapoints)
+            saved_batches += 1
+            datapoints.clear()
+            return
         article_nb_line = article[0][0]
         article_nb = extract_article_number(article_nb_line.strip(), expected=i)
         comment = article[1]
@@ -225,18 +239,16 @@ def process_comments(filename, output_filename):
             all_sections = split_comment(comment)
             for section in all_sections:
                 datapoints.append(create_entry('\n'.join(section), article_nb))
+
+    save_datapoints(f"{output_filename}_{saved_batches}.json", datapoints)
+    print(f'{saved_batches} batches saved.')
     print(lacking)
-    print(len(lacking))
     # print(f'too long: {too_long}')
-    with open(output_filename, 'w+', encoding='utf-8') as f:
-        json.dump(datapoints, f, ensure_ascii=False)
-        # f.write(datapoints_string)
-    print(f'{len(datapoints)} entries saved to file: {output_filename}')
 
 
 if __name__ == '__main__':
     filename = '../data/md/pzp_comments_v2.md'
-    output_filename = '../data/json/pzp_comments_v2_2_3.json'
+    output_filename = '../data/json/pzp_comments_v2_test_10'
 
     process_comments(filename, output_filename)
     # print(f'empty: {empty}')
